@@ -1,0 +1,71 @@
+# =============================================================================
+# Daphnet Freezing of Gait Dataset Configuration
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Paths
+# -----------------------------------------------------------------------------
+paths:
+  raw_data_dir: "data/raw/daphnet"
+  processed_data_dir: "data/processed"
+  segments_dir: "data/segments"
+  metadata_dir: "data/metadata"
+  models_dir: "outputs/models"
+  figures_dir: "outputs/figures"
+  results_dir: "outputs/results"
+
+# -----------------------------------------------------------------------------
+# Sampling
+# -----------------------------------------------------------------------------
+sampling:
+  target_fs: 64                  # Daphnet is recorded at 64 Hz
+
+# -----------------------------------------------------------------------------
+# Preprocessing
+# -----------------------------------------------------------------------------
+preprocessing:
+  bandpass_lowcut: 0.5           # Hz — removes DC drift and gravity
+  bandpass_highcut: 20.0         # Hz — removes high frequency noise
+  filter_order: 4                # Butterworth filter order
+  normalization_method: "zscore" # Options: zscore, minmax
+
+# -----------------------------------------------------------------------------
+# Segmentation
+# -----------------------------------------------------------------------------
+segmentation:
+  window_size_sec: 4.0           # 4 seconds x 64 Hz = 256 samples per window
+  overlap: 0.5                   # 50% overlap → step of 2 seconds
+  label_threshold: 0.5           # >50% FoG samples in window → label as FoG
+
+# -----------------------------------------------------------------------------
+# Features
+# -----------------------------------------------------------------------------
+features:
+  tremor_band_low: 4.0           # Hz — lower bound of Parkinsonian tremor band
+  tremor_band_high: 6.0          # Hz — upper bound of Parkinsonian tremor band
+
+# -----------------------------------------------------------------------------
+# Training
+# -----------------------------------------------------------------------------
+training:
+  model_type: "random_forest"    # Options: random_forest, svm, xgboost, cnn, lstm, cnn_lstm
+  random_seed: 42
+
+# -----------------------------------------------------------------------------
+# Dataset specific
+# -----------------------------------------------------------------------------
+dataset:
+  name: "daphnet"
+  n_subjects: 10
+  sensors:
+    - "ankle"
+    - "hip"
+    - "wrist"
+  sensor_axes:
+    - "x"
+    - "y"
+    - "z"
+  labels:
+    ignore: 0                    # Not part of experiment
+    normal: 1                    # Normal walking
+    fog: 2                       # Freezing of Gait episode
