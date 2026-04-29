@@ -44,26 +44,6 @@ class SignalPreprocessor:
 
         return df
 
-    @staticmethod
-    def resample(df: pd.DataFrame, target_fs: int) -> pd.DataFrame:
-        """
-        Resample the signal to target_fs if the current sampling rate
-        differs from target_fs.
-        For Daphnet this will be a no-op since it is already at 64 Hz.
-        Use scipy.signal.resample to resample each sensor column.
-        Do not resample the label, subject_id, or session_id columns.
-        Return the resampled DataFrame.
-        """
-        current_fs = int(1000 / df["timestamp"].diff().median())
-
-        if current_fs != target_fs:
-            num_samples = int(len(df) * target_fs / current_fs)
-            df[SENSOR_COLUMNS] = scipy_resample(
-                df[SENSOR_COLUMNS].values, num_samples
-            )
-
-        return df
-
     def bandpass_filter(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Apply a Butterworth bandpass filter to all sensor columns.
@@ -103,6 +83,26 @@ class SignalPreprocessor:
             raise ValueError(
                 f"Unrecognised normalization method: {self.normalization_method}. "
                 f"Options are: 'zscore', 'minmax'."
+            )
+
+        return df
+
+    @staticmethod
+    def resample(df: pd.DataFrame, target_fs: int) -> pd.DataFrame:
+        """
+        Resample the signal to target_fs if the current sampling rate
+        differs from target_fs.
+        For Daphnet this will be a no-op since it is already at 64 Hz.
+        Use scipy.signal.resample to resample each sensor column.
+        Do not resample the label, subject_id, or session_id columns.
+        Return the resampled DataFrame.
+        """
+        current_fs = int(1000 / df["timestamp"].diff().median())
+
+        if current_fs != target_fs:
+            num_samples = int(len(df) * target_fs / current_fs)
+            df[SENSOR_COLUMNS] = scipy_resample(
+                df[SENSOR_COLUMNS].values, num_samples
             )
 
         return df
