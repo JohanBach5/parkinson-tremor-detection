@@ -99,7 +99,7 @@ class SignalPreprocessor:
         """
         current_fs = int(1000 / df["timestamp"].diff().median())
 
-        if current_fs != target_fs:
+        if abs(current_fs - target_fs) > 2:
             num_samples = int(len(df) * target_fs / current_fs)
             df[SENSOR_COLUMNS] = scipy_resample(
                 df[SENSOR_COLUMNS].values, num_samples
