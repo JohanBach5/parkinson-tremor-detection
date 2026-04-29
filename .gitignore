@@ -216,3 +216,19 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Data
+data/
+
+# Outputs
+outputs/
+
+# Paper
+references/*.pdf
+
+# OS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
