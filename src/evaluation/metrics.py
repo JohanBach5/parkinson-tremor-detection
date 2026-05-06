@@ -15,7 +15,7 @@ def _extract_confusion_matrix_values(
     Compute confusion matrix and extract TN, FP, FN, TP.
     Return tuple (TN, FP, FN, TP).
     """
-    cm = confusion_matrix(y_true, y_pred)
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
     TN = cm[0, 0]
     FP = cm[0, 1]
     FN = cm[1, 0]
