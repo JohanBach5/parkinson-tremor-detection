@@ -65,4 +65,3 @@ class RandomForestModel(BaseModel):
         """
         with open(path, "rb") as f:
             self.model = pickle.load(f)
-            
