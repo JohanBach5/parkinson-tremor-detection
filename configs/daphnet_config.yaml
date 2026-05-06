@@ -69,3 +69,20 @@ dataset:
     ignore: 0                    # Not part of experiment
     normal: 1                    # Normal walking
     fog: 2                       # Freezing of Gait episode
+
+  # -----------------------------------------------------------------------------
+  # Model hyperparameters
+  # -----------------------------------------------------------------------------
+  model:
+    random_forest:
+      n_estimators: 100
+      max_depth: null        # null in YAML = None in Python
+
+    svm:
+      C: 1.0
+      kernel: "rbf"
+
+    xgboost:
+      n_estimators: 100
+      max_depth: 6
+      learning_rate: 0.1
