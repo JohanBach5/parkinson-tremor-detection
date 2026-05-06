@@ -48,7 +48,7 @@ features:
 # Training
 # -----------------------------------------------------------------------------
 training:
-  model_type: "random_forest"    # Options: random_forest, svm, xgboost, cnn, lstm, cnn_lstm
+  model_type: "svm"    # Options: random_forest, svm, xgboost, cnn, lstm, cnn_lstm
   random_seed: 42
 
 # -----------------------------------------------------------------------------
@@ -70,9 +70,9 @@ dataset:
     normal: 1                    # Normal walking
     fog: 2                       # Freezing of Gait episode
 
-  # -----------------------------------------------------------------------------
-  # Model hyperparameters
-  # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Model hyperparameters
+# -----------------------------------------------------------------------------
 model:
   random_forest:
     n_estimators: 100
