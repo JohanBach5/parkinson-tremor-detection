@@ -4,6 +4,7 @@ import numpy as np
 from src.data.loader import get_loader
 from src.data.preprocessor import preprocess_all_subjects
 from src.data.segmentor import segment_all_subjects
+from src.features.feature_pipeline import FeaturePipeline, save_feature_matrix
 
 
 def load_config(config_path: str) -> dict:
@@ -96,6 +97,30 @@ def main():
         subject_normal = np.sum(all_labels[mask] == 0)
         print(f"   {subject} → {np.sum(mask)} windows "
               f"(normal: {subject_normal}, FoG: {subject_fog})")
+
+    # -------------------------------------------------------------------------
+    # 9. Feature extraction
+    # -------------------------------------------------------------------------
+    pipeline = FeaturePipeline(config)
+    X = pipeline.extract(all_windows)
+    feature_names = FeaturePipeline.get_feature_names()
+
+    print(f"\n✅ Feature extraction complete")
+    print(f"   Feature matrix shape: {X.shape}")
+    print(f"   Number of feature names: {len(feature_names)}")
+    print(f"   First 5 features: {feature_names[:5]}")
+    print(f"   Last 5 features: {feature_names[-5:]}")
+
+    # verify shapes match
+    assert X.shape[1] == len(feature_names), (
+        f"Mismatch: {X.shape[1]} features but {len(feature_names)} names"
+    )
+    print(f"   ✅ Feature count matches feature names")
+
+    # save
+    output_path = f"{config['paths']['segments_dir']}/features.npz"
+    save_feature_matrix(X, all_labels, output_path)
+    print(f"   ✅ Feature matrix saved to {output_path}")
 
 
 if __name__ == "__main__":
