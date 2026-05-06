@@ -94,7 +94,10 @@ class LOSOTrainer:
 
         return {
             "metrics": metrics,
-            "fold_subject": fold_subject
+            "fold_subject": fold_subject,
+            "y_test": y_test,
+            "y_pred": y_pred,
+            "y_proba": y_proba
         }
 
     @staticmethod
