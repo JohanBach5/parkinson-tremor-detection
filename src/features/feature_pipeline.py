@@ -62,7 +62,12 @@ class FeaturePipeline:
             extracted_window = self.extract_single_window(window)
             result.append(extracted_window)
 
-        return np.stack(result)
+        X = np.stack(result)
+
+        # replace NaN and inf values with 0
+        X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+
+        return X
 
     def extract_single_window(self, window: np.ndarray) -> np.ndarray:
         """
