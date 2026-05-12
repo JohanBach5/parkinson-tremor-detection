@@ -45,7 +45,8 @@ class SignalPreprocessor:
         in that exact order.
         Return the fully preprocessed DataFrame.
         """
-        df = self.resample(df, self.target_fs)
+        timestamp_unit = self.config["sampling"].get("timestamp_unit", "milliseconds")
+        df = self.resample(df, self.target_fs, timestamp_unit)
         df = self.bandpass_filter(df)
         df = self.normalize(df)
 
@@ -94,16 +95,11 @@ class SignalPreprocessor:
 
         return df
 
-    def resample(self, df: pd.DataFrame, target_fs: int) -> pd.DataFrame:
-        """
-        Resample the signal to target_fs if the current sampling rate
-        differs from target_fs.
-        For Daphnet this will be a no-op since it is already at 64 Hz.
-        Use scipy.signal.resample to resample each sensor column.
-        Do not resample the label, subject_id, or session_id columns.
-        Return the resampled DataFrame.
-        """
-        current_fs = int(1000 / df["timestamp"].diff().median())
+    def resample(self, df: pd.DataFrame, target_fs: int, timestamp_unit: str = "milliseconds") -> pd.DataFrame:
+        if timestamp_unit == "milliseconds":
+            current_fs = int(1000 / df["timestamp"].diff().median())
+        elif timestamp_unit == "seconds":
+            current_fs = int(1 / df["timestamp"].diff().median())
 
         if abs(current_fs - target_fs) > 2:
             num_samples = int(len(df) * target_fs / current_fs)

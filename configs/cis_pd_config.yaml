@@ -19,7 +19,8 @@ paths:
 # Sampling
 # -----------------------------------------------------------------------------
 sampling:
-  target_fs: 50                  # CIS-PD smartwatch sampled at 50 Hz (confirmed: 0.02s between samples)
+  target_fs: 50
+  timestamp_unit: "seconds"
 
 # -----------------------------------------------------------------------------
 # Preprocessing
@@ -37,9 +38,10 @@ preprocessing:
 # within each measurement to extract features, then aggregate predictions
 # back to the measurement-level label.
 segmentation:
-  window_size_sec: 5.0           # 5 seconds x 50 Hz = 250 samples per sub-window
-  overlap: 0.5                   # 50% overlap → step of 2.5 seconds
-  aggregation: "mean"            # how sub-window predictions roll up to one measurement
+  window_size_sec: 5.0
+  overlap: 0.5
+  aggregation: "mean"
+  label_threshold: 0.5
 
 # -----------------------------------------------------------------------------
 # Features

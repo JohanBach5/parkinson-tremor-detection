@@ -18,7 +18,8 @@ paths:
 # Sampling
 # -----------------------------------------------------------------------------
 sampling:
-  target_fs: 64                  # Daphnet is recorded at 64 Hz
+  target_fs: 64
+  timestamp_unit: "milliseconds"
 
 # -----------------------------------------------------------------------------
 # Preprocessing

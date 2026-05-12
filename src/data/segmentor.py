@@ -43,11 +43,16 @@ class SlidingWindowSegmentor:
         - labels shape is [n_windows]
         """
         signal = df[self.sensor_columns].values
-        label_array = df["label"].values
 
+        task_type = self.config["training"].get("task_type", "classification")
+        label_col = "tremor_score" if task_type == "regression" else "label"
+        label_array = df[label_col].values
+        labels = self._assign_labels(
+            label_array, self.window_size, self.step_size,
+            self.label_threshold, task_type
+        )
         self._validate_window_params(len(signal), self.window_size, self.step_size)
         windows = self._create_windows(signal, self.window_size, self.step_size)
-        labels = self._assign_labels(label_array, self.window_size, self.step_size, self.label_threshold)
 
         return windows, labels
 
@@ -79,24 +84,22 @@ class SlidingWindowSegmentor:
             label_array: np.ndarray,
             window_size: int,
             step_size: int,
-            threshold: float = 0.5
+            threshold: float = 0.5,
+            task_type: str = "classification"
     ) -> np.ndarray:
-        """
-        Assign one label per window using majority voting.
-        For each window, compute the fraction of samples with label == 2
-        (FoG episode).
-        If fraction > threshold assign label 1 (FoG).
-        Otherwise assign label 0 (normal).
-        Return a numpy array of shape [n_windows] with binary labels.
-        """
         labels = []
         start = 0
 
         while start + window_size <= len(label_array):
             window_labels = label_array[start: start + window_size]
-            fog_count = np.sum(window_labels == 2)
-            fraction = fog_count / len(window_labels)
-            label = int(fraction > threshold)
+
+            if task_type == "classification":
+                fog_count = np.sum(window_labels == 2)
+                fraction = fog_count / len(window_labels)
+                label = int(fraction > threshold)
+            elif task_type == "regression":
+                label = float(np.mean(window_labels))
+
             labels.append(label)
             start += step_size
 
