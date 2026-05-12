@@ -3,7 +3,7 @@ import numpy as np
 
 from src.features.time_domain import extract_time_domain_features
 from src.features.frequency_domain import extract_frequency_domain_features
-from src.data.preprocessor import SENSOR_COLUMNS
+from src.data.preprocessor import get_sensor_columns
 
 
 def save_feature_matrix(
@@ -44,6 +44,7 @@ class FeaturePipeline:
         - tremor_band_high from config["features"]["tremor_band_high"]
         """
         self.config = config
+        self.sensor_columns = get_sensor_columns(config)
         self.target_fs = self.config["sampling"]["target_fs"]
         self.tremor_band_low = self.config["features"]["tremor_band_low"]
         self.tremor_band_high = self.config["features"]["tremor_band_high"]
@@ -87,8 +88,7 @@ class FeaturePipeline:
 
         return np.concatenate([time_domain_feature, frequency_domain_features])
 
-    @staticmethod
-    def get_feature_names() -> list[str]:
+    def get_feature_names(self) -> list[str]:
         """
         Return a list of human-readable feature names in the same
         order as the columns in the feature matrix.
@@ -103,7 +103,7 @@ class FeaturePipeline:
         # time domain — per channel features
         time_features = ["mean", "std", "rms", "zcr"]
         for feature in time_features:
-            for channel in SENSOR_COLUMNS:
+            for channel in self.sensor_columns:
                 names.append(f"{feature}_{channel}")
 
         # sma — single scalar
@@ -112,7 +112,7 @@ class FeaturePipeline:
         # time domain — remaining per channel features
         time_features_2 = ["skewness", "kurtosis", "peak_to_peak"]
         for feature in time_features_2:
-            for channel in SENSOR_COLUMNS:
+            for channel in self.sensor_columns:
                 names.append(f"{feature}_{channel}")
 
         # frequency domain — per channel features
@@ -123,7 +123,7 @@ class FeaturePipeline:
             "spectral_edge_frequency"
         ]
         for feature in freq_features:
-            for channel in SENSOR_COLUMNS:
+            for channel in self.sensor_columns:
                 names.append(f"{feature}_{channel}")
 
         return names

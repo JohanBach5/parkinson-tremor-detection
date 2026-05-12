@@ -3,11 +3,17 @@ import pandas as pd
 from scipy.signal import butter, filtfilt
 from scipy.signal import resample as scipy_resample
 
-SENSOR_COLUMNS = [
-    "ankle_acc_x", "ankle_acc_y", "ankle_acc_z",
-    "hip_acc_x", "hip_acc_y", "hip_acc_z",
-    "wrist_acc_x", "wrist_acc_y", "wrist_acc_z"
-]
+
+def get_sensor_columns(config: dict) -> list[str]:
+    """
+    Build sensor column names dynamically from config.
+    For Daphnet: ankle, hip, wrist × x, y, z → 9 columns
+    For CIS-PD: wrist × x, y, z → 3 columns
+    """
+    sensors = config["dataset"]["sensors"]
+    axes = config["dataset"]["sensor_axes"]
+    return [f"{sensor}_acc_{axis.lower()}" for sensor in sensors for axis in axes]
+
 
 METADATA_COLUMNS = ["timestamp", "label", "subject_id", "session_id"]
 
@@ -25,6 +31,7 @@ class SignalPreprocessor:
         - normalization_method from config["preprocessing"]["normalization_method"]
         """
         self.config = config
+        self.sensor_columns = get_sensor_columns(config)
         self.target_fs = self.config["sampling"]["target_fs"]
         self.lowcut = self.config["preprocessing"]["bandpass_lowcut"]
         self.highcut = self.config["preprocessing"]["bandpass_highcut"]
@@ -70,14 +77,14 @@ class SignalPreprocessor:
         Return the normalized DataFrame.
         """
         if self.normalization_method == "zscore":
-            df[SENSOR_COLUMNS] = (
-                df[SENSOR_COLUMNS] - df[SENSOR_COLUMNS].mean()
-            ) / df[SENSOR_COLUMNS].std()
+            df[self.sensor_columns] = (
+                                              df[self.sensor_columns] - df[self.sensor_columns].mean()
+                                      ) / df[self.sensor_columns].std()
 
         elif self.normalization_method == "minmax":
-            df[SENSOR_COLUMNS] = (
-                df[SENSOR_COLUMNS] - df[SENSOR_COLUMNS].min()
-            ) / (df[SENSOR_COLUMNS].max() - df[SENSOR_COLUMNS].min())
+            df[self.sensor_columns] = (
+                                              df[self.sensor_columns] - df[self.sensor_columns].min()
+                                      ) / (df[self.sensor_columns].max() - df[self.sensor_columns].min())
 
         else:
             raise ValueError(
@@ -87,8 +94,7 @@ class SignalPreprocessor:
 
         return df
 
-    @staticmethod
-    def resample(df: pd.DataFrame, target_fs: int) -> pd.DataFrame:
+    def resample(self, df: pd.DataFrame, target_fs: int) -> pd.DataFrame:
         """
         Resample the signal to target_fs if the current sampling rate
         differs from target_fs.
@@ -101,9 +107,27 @@ class SignalPreprocessor:
 
         if abs(current_fs - target_fs) > 2:
             num_samples = int(len(df) * target_fs / current_fs)
-            df[SENSOR_COLUMNS] = scipy_resample(
-                df[SENSOR_COLUMNS].values, num_samples
+            df[self.sensor_columns] = scipy_resample(
+                df[self.sensor_columns].values, num_samples
             )
+
+        return df
+
+    def _apply_filter_to_all_axes(
+            self,
+            df: pd.DataFrame,
+            b: np.ndarray,
+            a: np.ndarray
+    ) -> pd.DataFrame:
+        """
+        Apply the filter defined by coefficients b and a to every
+        sensor column in the DataFrame using scipy.signal.filtfilt.
+        filtfilt applies the filter forward and backward to avoid
+        phase distortion.
+        Return the filtered DataFrame.
+        """
+        for col in self.sensor_columns:
+            df[col] = filtfilt(b, a, df[col].values)
 
         return df
 
@@ -124,27 +148,9 @@ class SignalPreprocessor:
         low = lowcut / nyquist
         high = highcut / nyquist
 
-        b, a = butter(order, [low, high], btype='band', output='ba') # noqa
+        b, a = butter(order, [low, high], btype='band', output='ba')  # noqa
 
         return b, a
-
-    @staticmethod
-    def _apply_filter_to_all_axes(
-            df: pd.DataFrame,
-            b: np.ndarray,
-            a: np.ndarray
-    ) -> pd.DataFrame:
-        """
-        Apply the filter defined by coefficients b and a to every
-        sensor column in the DataFrame using scipy.signal.filtfilt.
-        filtfilt applies the filter forward and backward to avoid
-        phase distortion.
-        Return the filtered DataFrame.
-        """
-        for col in SENSOR_COLUMNS:
-            df[col] = filtfilt(b, a, df[col].values)
-
-        return df
 
 
 def preprocess_all_subjects(

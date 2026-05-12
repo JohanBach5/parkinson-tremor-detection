@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.data.preprocessor import SENSOR_COLUMNS
+from src.data.preprocessor import get_sensor_columns
 
 
 class SlidingWindowSegmentor:
@@ -19,6 +19,7 @@ class SlidingWindowSegmentor:
         - step_size = int(window_size * (1 - overlap))
         """
         self.config = config
+        self.sensor_columns = get_sensor_columns(config)
         self.window_size_sec = self.config["segmentation"]["window_size_sec"]
         self.overlap = self.config["segmentation"]["overlap"]
         self.label_threshold = self.config["segmentation"]["label_threshold"]
@@ -41,7 +42,7 @@ class SlidingWindowSegmentor:
         - windows shape is [n_windows, window_size, n_channels]
         - labels shape is [n_windows]
         """
-        signal = df[SENSOR_COLUMNS].values
+        signal = df[self.sensor_columns].values
         label_array = df["label"].values
 
         self._validate_window_params(len(signal), self.window_size, self.step_size)
