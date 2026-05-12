@@ -5,7 +5,12 @@ from sklearn.metrics import (
     roc_auc_score,
     cohen_kappa_score
 )
+from scipy.stats import pearsonr, spearmanr
 
+
+# -------------------------------------------------------
+# Classification metrics
+# -------------------------------------------------------
 
 def _extract_confusion_matrix_values(
         y_true: np.ndarray,
@@ -122,3 +127,103 @@ def aggregate_loso_metrics(fold_results: list[dict]) -> dict[str, float]:
         aggregated[f"{key}_std"] = float(np.std(values))
 
     return aggregated
+
+
+# -------------------------------------------------------
+# Regression metrics
+# -------------------------------------------------------
+
+def compute_mse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Compute Mean Squared Error.
+    Formula: mean((y_true - y_pred)^2)
+    """
+    return float(np.mean((y_true - y_pred) ** 2))
+
+
+def compute_rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Compute Root Mean Squared Error.
+    Formula: sqrt(mean((y_true - y_pred)^2))
+    """
+    return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+
+
+def compute_mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Compute Mean Absolute Error.
+    Formula: mean(|y_true - y_pred|)
+    """
+    return float(np.mean(np.abs(y_true - y_pred)))
+
+
+def compute_pearson_r(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+        Compute Pearson correlation coefficient between y_true and y_pred.
+        Use scipy.stats.pearsonr().
+        Return 0.0 if std of either array is zero.
+        """
+    if np.std(y_true) == 0 or np.std(y_pred) == 0:
+        return 0.0
+
+    r, _ = pearsonr(y_true, y_pred)
+
+    return float(r)
+
+
+def compute_spearman_r(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Compute Spearman rank correlation between y_true and y_pred.
+    Use scipy.stats.spearmanr().
+    Return 0.0 if std of either array is zero.
+    """
+    if np.std(y_true) == 0 or np.std(y_pred) == 0:
+        return 0.0
+
+    r, _ = spearmanr(y_true, y_pred)  # noqa
+
+    return float(r)
+
+
+def compute_subject_weighted_mse(
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        subject_ids: np.ndarray
+) -> float:
+    """
+    Compute MSE per subject then average across subjects.
+    This is the official DREAM challenge metric.
+    Steps:
+    1. Get unique subject IDs
+    2. For each subject compute MSE on their samples only
+    3. Return the mean of all per-subject MSEs
+    """
+    mse_aggregated = []
+    unique_subject = np.unique(subject_ids)
+
+    for subject in unique_subject:
+        mask = subject_ids == subject
+        mse = compute_mse(y_true[mask], y_pred[mask])
+        mse_aggregated.append(mse)
+
+    return float(np.mean(mse_aggregated))
+
+
+def compute_all_regression_metrics(
+        y_true: np.ndarray,
+        y_pred: np.ndarray,
+        subject_ids: np.ndarray
+) -> dict[str, float]:
+    """
+    Compute all regression metrics and return in a single dictionary.
+    Keys: 'mse', 'rmse', 'mae', 'pearson_r', 'spearman_r',
+    'subject_weighted_mse'
+    """
+    return {
+        "mse": compute_mse(y_true, y_pred),
+        "rmse": compute_rmse(y_true, y_pred),
+        "mae": compute_mae(y_true, y_pred),
+        "pearson_r": compute_pearson_r(y_true, y_pred),
+        "spearman_r": compute_spearman_r(y_true, y_pred),
+        "subject_weighted_mse": compute_subject_weighted_mse(y_true, y_pred, subject_ids)
+    }
