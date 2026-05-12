@@ -2,7 +2,6 @@ import os
 import glob
 import pandas as pd
 
-
 COLUMN_NAMES = [
     "timestamp",
     "ankle_acc_x", "ankle_acc_y", "ankle_acc_z",
