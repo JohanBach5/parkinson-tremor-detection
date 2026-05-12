@@ -6,12 +6,11 @@
 # Paths
 # -----------------------------------------------------------------------------
 paths:
-  raw_data_dir: "data/cis_pd/sensor_data/cis_pd_sensor_data"   # contains smartwatch_accelerometer/<measurement_id>.csv
-  labels_dir: "data/cis_pd/labels"
-  clinical_dir: "data/cis_pd/clinical"
-  processed_data_dir: "data/processed"
-  segments_dir: "data/segments"
-  metadata_dir: "data/metadata"
+  raw_data_dir: "data/cis_pd/sensor_data/cis_pd_sensor_data/smartwatch_accelerometer"
+  labels_path: "data/cis_pd/labels/CIS-PD_Training_Data_IDs_Labels.csv"
+  processed_data_dir: "data/cis_pd/processed"
+  segments_dir: "data/cis_pd/segments"
+  metadata_dir: "data/cis_pd/metadata"
   models_dir: "outputs/models"
   figures_dir: "outputs/figures"
   results_dir: "outputs/results"
@@ -62,7 +61,8 @@ training:
 # -----------------------------------------------------------------------------
 dataset:
   name: "cis_pd"
-  n_subjects: 16                 # subjects in training labels (21 total in demographics)
+  n_subjects: 16                # subjects in training labels (21 total in demographics)
+  valid_only: true              # drop measurements with NaN target
   sensors:
     - "wrist"                    # single smartwatch on most-affected wrist
   sensor_axes:
@@ -73,7 +73,6 @@ dataset:
   labels:
     target: "tremor"             # Options: tremor, on_off, dyskinesia
     score_range: [0, 4]          # 0=none, 1=slight, 2=mild, 3=moderate, 4=severe
-    valid_only: true             # drop measurements with NaN target
 
 # -----------------------------------------------------------------------------
 # Model hyperparameters
