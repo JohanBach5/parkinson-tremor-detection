@@ -2,7 +2,8 @@ import os
 import numpy as np
 
 from src.models.factory import get_model
-from src.evaluation.metrics import compute_all_metrics, aggregate_loso_metrics
+from src.evaluation.metrics import (compute_all_metrics, aggregate_loso_metrics,
+                                    compute_all_regression_metrics)
 
 
 class LOSOTrainer:
@@ -21,6 +22,7 @@ class LOSOTrainer:
         self.random_seed = self.config["training"]["random_seed"]
         self.models_dir = self.config["paths"]["models_dir"]
         self.results_dir = self.config["paths"]["results_dir"]
+        self.task_type = self.config["training"].get("task_type", "classification")
 
     def run(
             self,
@@ -85,9 +87,17 @@ class LOSOTrainer:
         model.fit(X_train, y_train)
 
         y_pred = model.predict(X_test)
-        y_proba = model.predict_proba(X_test)
 
-        metrics = compute_all_metrics(y_test, y_pred, y_proba)
+        if self.task_type == "classification":
+            y_proba = model.predict_proba(X_test)
+            metrics = compute_all_metrics(y_test, y_pred, y_proba)
+        elif self.task_type == "regression":
+            y_proba = None
+            metrics = compute_all_regression_metrics(
+                y_test, y_pred, np.array([fold_subject] * len(y_test))
+            )
+        else:
+            raise ValueError(f"Unknown task_type: {self.task_type}")
 
         model_path = os.path.join(self.models_dir, f"{fold_subject}.pkl")
         model.save(model_path)
