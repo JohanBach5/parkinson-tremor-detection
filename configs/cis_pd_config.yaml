@@ -1,0 +1,102 @@
+# =============================================================================
+# CIS-PD Tremor Severity Dataset Configuration (BEAT-PD DREAM Challenge)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Paths
+# -----------------------------------------------------------------------------
+paths:
+  raw_data_dir: "data/cis_pd/sensor_data/cis_pd_sensor_data"   # contains smartwatch_accelerometer/<measurement_id>.csv
+  labels_dir: "data/cis_pd/labels"
+  clinical_dir: "data/cis_pd/clinical"
+  processed_data_dir: "data/processed"
+  segments_dir: "data/segments"
+  metadata_dir: "data/metadata"
+  models_dir: "outputs/models"
+  figures_dir: "outputs/figures"
+  results_dir: "outputs/results"
+
+# -----------------------------------------------------------------------------
+# Sampling
+# -----------------------------------------------------------------------------
+sampling:
+  target_fs: 50                  # CIS-PD smartwatch sampled at 50 Hz (confirmed: 0.02s between samples)
+
+# -----------------------------------------------------------------------------
+# Preprocessing
+# -----------------------------------------------------------------------------
+preprocessing:
+  bandpass_lowcut: 0.5           # Hz — removes DC drift and gravity
+  bandpass_highcut: 20.0         # Hz — removes high frequency noise
+  filter_order: 4                # Butterworth filter order
+  normalization_method: "zscore" # Options: zscore, minmax
+
+# -----------------------------------------------------------------------------
+# Segmentation
+# -----------------------------------------------------------------------------
+# CIS-PD measurements are already segmented (~20 min each). We sub-window
+# within each measurement to extract features, then aggregate predictions
+# back to the measurement-level label.
+segmentation:
+  window_size_sec: 5.0           # 5 seconds x 50 Hz = 250 samples per sub-window
+  overlap: 0.5                   # 50% overlap → step of 2.5 seconds
+  aggregation: "mean"            # how sub-window predictions roll up to one measurement
+
+# -----------------------------------------------------------------------------
+# Features
+# -----------------------------------------------------------------------------
+features:
+  tremor_band_low: 3.0           # Hz — lower bound of Parkinsonian tremor band
+  tremor_band_high: 7.0          # Hz — upper bound of Parkinsonian tremor band
+
+# -----------------------------------------------------------------------------
+# Training
+# -----------------------------------------------------------------------------
+training:
+  model_type: "xgboost"          # Options: random_forest, svm, xgboost, cnn, lstm, cnn_lstm
+  task_type: "regression"        # Options: classification, regression
+  random_seed: 42
+
+# -----------------------------------------------------------------------------
+# Dataset specific
+# -----------------------------------------------------------------------------
+dataset:
+  name: "cis_pd"
+  n_subjects: 16                 # subjects in training labels (21 total in demographics)
+  sensors:
+    - "wrist"                    # single smartwatch on most-affected wrist
+  sensor_axes:
+    - "X"
+    - "Y"
+    - "Z"
+  signal_units: "g"              # gravitational units, not m/s^2
+  labels:
+    target: "tremor"             # Options: tremor, on_off, dyskinesia
+    score_range: [0, 4]          # 0=none, 1=slight, 2=mild, 3=moderate, 4=severe
+    valid_only: true             # drop measurements with NaN target
+
+# -----------------------------------------------------------------------------
+# Model hyperparameters
+# -----------------------------------------------------------------------------
+model:
+  random_forest:
+    n_estimators: 200
+    max_depth: 12
+
+  svm:
+    C: 1.0
+    kernel: "rbf"
+    epsilon: 0.1                 # SVR-specific, ignored by classifier
+
+  xgboost:
+    n_estimators: 300
+    max_depth: 6
+    learning_rate: 0.05
+    objective: "reg:squarederror"
+
+# -----------------------------------------------------------------------------
+# Evaluation
+# -----------------------------------------------------------------------------
+evaluation:
+  primary_metric: "subject_weighted_mse"   # DREAM BEAT-PD official metric
+  use_predefined_test_split: true          # use CIS-PD_Test_Data_IDs_Labels.csv as held-out
