@@ -28,15 +28,6 @@ class BaseModel(ABC):
         pass
 
     @abstractmethod
-    def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """
-        Predict class probabilities for the given feature matrix.
-        Input shape: [n_samples, n_features]
-        Return shape: [n_samples, n_classes]
-        """
-        pass
-
-    @abstractmethod
     def save(self, path: str) -> None:
         """
         Save the trained model to disk at the given path.
@@ -58,3 +49,10 @@ class BaseModel(ABC):
         This is not abstract — it works for all subclasses automatically.
         """
         return self.__class__.__name__
+
+    def predict_proba(self, X: np.ndarray) -> np.ndarray | None:
+        """
+        Default implementation for regression models — not supported.
+        Returns None. Override in classification models.
+        """
+        return None
